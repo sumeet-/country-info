@@ -24,12 +24,8 @@ async def chat_endpoint(request: Request):
         if prompt is None or prompt.strip() == "":
             return {"error": "prompt is required"}
         prompt = body["prompt"]
-
-        print(f"Received prompt: {prompt}")
-
         answer = run_graph(prompt)
 
         return {"answer": answer}
     except Exception as e:
-        print(f"Error processing prompt: {str(e)}")
         return {"error": str(e)}

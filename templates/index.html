@@ -4,99 +4,429 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Country Info AI Chatbot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #f4f6f8;
+    :root {
+      --primary: #0f172a;
+      --primary-light: #1e293b;
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.3);
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    * {
       margin: 0;
-      height: 100vh;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      top: -300px;
+      right: -300px;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    body::after {
+      content: '';
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+      bottom: -200px;
+      left: -200px;
+      animation: float 15s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(30px, -30px) rotate(120deg); }
+      66% { transform: translate(-20px, 20px) rotate(240deg); }
     }
 
     .chat-container {
       width: 100%;
-      max-width: 500px;
-      height: 85vh;
-      background: white;
-      border-radius: 12px;
+      max-width: 550px;
+      height: 700px;
+      max-height: 90vh;
+      background: var(--surface);
+      border-radius: 24px;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      box-shadow: var(--shadow-xl);
       overflow: hidden;
+      position: relative;
+      z-index: 1;
+      animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
     .header {
-      background: #2563eb;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
       color: white;
-      padding: 16px;
-      font-size: 18px;
-      font-weight: 600;
+      padding: 20px 24px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background:
+        radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.3) 0%, transparent 50%);
+      animation: headerGlow 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes headerGlow {
+      0% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    .header-content {
+      position: relative;
+      z-index: 1;
+      align-items: center;
       text-align: center;
+    }
+
+    .header-title {
+      /* font-family: 'Times New Roman', serif; */
+      font-size: 28px;
+      font-weight: 400;
+      text-align: center;
+      letter-spacing: -0.5px;
+      margin-bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      align-content: center;
+    }
+
+    .globe-icon {
+      font-size: 32px;
+      animation: rotate 20s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .header-subtitle {
+      font-size: 14px;
+      opacity: 0.85;
+      font-weight: 400;
+      letter-spacing: 0.3px;
     }
 
     .messages {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
+      gap: 16px;
+      background: var(--surface-2);
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    .messages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .messages::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 10px;
+    }
+
+    .messages::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    .message-wrapper {
+      display: flex;
       gap: 10px;
+      animation: messageSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes messageSlide {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message-wrapper.user {
+      flex-direction: row-reverse;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .avatar.user-avatar {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .avatar.bot-avatar {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     }
 
     .message {
-      max-width: 80%;
-      padding: 10px 14px;
-      border-radius: 12px;
-      line-height: 1.4;
+      max-width: 75%;
+      padding: 14px 18px;
+      border-radius: 18px;
+      line-height: 1.6;
+      font-size: 15px;
+      position: relative;
+      word-wrap: break-word;
     }
 
-    .user {
-      background: #2563eb;
+    .message.user {
+      background: linear-gradient(135deg, var(--accent) 0%, #2563eb 100%);
       color: white;
-      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
     }
 
-    .bot {
-      background: #e5e7eb;
-      color: black;
-      align-self: flex-start;
+    .message.bot {
+      background: white;
+      color: var(--text);
+      border-bottom-left-radius: 4px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border);
+    }
+
+    .typing {
+      display: flex;
+      gap: 6px;
+      padding: 14px 18px;
+      background: white;
+      border-radius: 18px;
+      border-bottom-left-radius: 4px;
+      width: fit-content;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border);
+    }
+
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: typingBounce 1.4s ease-in-out infinite;
+    }
+
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typingBounce {
+      0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.7;
+      }
+      30% {
+        transform: translateY(-10px);
+        opacity: 1;
+      }
     }
 
     .input-area {
       display: flex;
-      padding: 12px;
-      border-top: 1px solid #ddd;
-      gap: 8px;
+      padding: 20px 24px 24px;
+      gap: 12px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      position: relative;
+    }
+
+    .input-wrapper {
+      flex: 1;
+      position: relative;
     }
 
     input {
-      flex: 1;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 14px;
+      width: 100%;
+      padding: 14px 18px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      font-size: 15px;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s ease;
+      background: var(--surface-2);
+      color: var(--text);
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: white;
+      box-shadow: 0 0 0 4px var(--accent-glow);
+    }
+
+    input::placeholder {
+      color: var(--text-muted);
     }
 
     button {
-      background: #2563eb;
+      background: linear-gradient(135deg, var(--accent) 0%, #2563eb 100%);
       color: white;
       border: none;
-      padding: 10px 14px;
-      border-radius: 8px;
+      padding: 14px 24px;
+      border-radius: 12px;
       cursor: pointer;
+      font-weight: 600;
+      font-size: 15px;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.5s ease;
+    }
+
+    button:hover::before {
+      left: 100%;
     }
 
     button:hover {
-      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
     }
 
-    .typing {
-      font-style: italic;
+    button:active {
+      transform: translateY(0);
+    }
+
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 4px 24px 8px;
+      background: var(--surface-2);
+      margin-top: -8px;
+      animation: fadeIn 0.6s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .suggestion-chip {
+      background: white;
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 20px;
       font-size: 13px;
-      color: #666;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text);
+    }
+
+    .suggestion-chip:hover {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    }
+
+    @media (max-width: 600px) {
+      .chat-container {
+        max-width: 100%;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+      }
+
+      .header-title {
+        font-size: 24px;
+      }
+
+      .message {
+        max-width: 85%;
+      }
     }
   </style>
 </head>
@@ -104,49 +434,119 @@
 <body>
   <div class="chat-container">
     <div class="header">
-      🌍 Country Info AI Chatbot
+      <div class="header-content">
+        <div class="header-title">
+          <span class="globe-icon">🌍</span>
+          <span>Country Explorer</span>
+        </div>
+        <!-- <div class="header-subtitle">Ask me anything about countries worldwide</div> -->
+      </div>
     </div>
 
     <div id="messages" class="messages"></div>
 
+    <div class="suggestions" id="suggestions">
+      <div class="suggestion-chip" onclick="askSuggestion('What is the capital of Japan?')">Capital of Japan?</div>
+      <div class="suggestion-chip" onclick="askSuggestion('Tell me about France')">About France</div>
+      <div class="suggestion-chip" onclick="askSuggestion('Population of India?')">India's population</div>
+    </div>
+
     <div class="input-area">
-      <input
-        id="questionInput"
-        type="text"
-        placeholder="Ask about any country..."
-      />
-      <button onclick="sendMessage()">Send</button>
+      <div class="input-wrapper">
+        <input
+          id="questionInput"
+          type="text"
+          placeholder="Ask about any country..."
+          autocomplete="off"
+        />
+      </div>
+      <button onclick="sendMessage()">
+        <span>Send</span>
+      </button>
     </div>
   </div>
 
   <script>
     const input = document.getElementById("questionInput");
     const messages = document.getElementById("messages");
+    const suggestions = document.getElementById("suggestions");
+    let messageCount = 0;
 
     input.addEventListener("keypress", function (e) {
-      if (e.key === "Enter") sendMessage();
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
     });
 
+    function hideSuggestions() {
+      if (suggestions && messageCount === 0) {
+        suggestions.style.display = 'none';
+      }
+    }
+
     function addMessage(text, type) {
-      const div = document.createElement("div");
-      div.className = "message " + type;
-      div.innerText = text;
-      messages.appendChild(div);
+      hideSuggestions();
+      messageCount++;
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "message-wrapper " + type;
+
+      const avatar = document.createElement("div");
+      avatar.className = "avatar " + (type === "user" ? "user-avatar" : "bot-avatar");
+      avatar.textContent = type === "user" ? "👤" : "🤖";
+
+      const message = document.createElement("div");
+      message.className = "message " + type;
+      message.textContent = text;
+
+      if (type === "user") {
+        wrapper.appendChild(message);
+        wrapper.appendChild(avatar);
+      } else {
+        wrapper.appendChild(avatar);
+        wrapper.appendChild(message);
+      }
+
+      messages.appendChild(wrapper);
       messages.scrollTop = messages.scrollHeight;
     }
 
     function addTyping() {
-      const div = document.createElement("div");
-      div.className = "message bot typing";
-      div.id = "typing";
-      div.innerText = "Thinking...";
-      messages.appendChild(div);
+      hideSuggestions();
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "message-wrapper";
+      wrapper.id = "typingWrapper";
+
+      const avatar = document.createElement("div");
+      avatar.className = "avatar bot-avatar";
+      avatar.textContent = "🤖";
+
+      const typing = document.createElement("div");
+      typing.className = "typing";
+      typing.id = "typing";
+
+      for (let i = 0; i < 3; i++) {
+        const dot = document.createElement("div");
+        dot.className = "typing-dot";
+        typing.appendChild(dot);
+      }
+
+      wrapper.appendChild(avatar);
+      wrapper.appendChild(typing);
+      messages.appendChild(wrapper);
       messages.scrollTop = messages.scrollHeight;
     }
 
     function removeTyping() {
-      const el = document.getElementById("typing");
-      if (el) el.remove();
+      const wrapper = document.getElementById("typingWrapper");
+      if (wrapper) wrapper.remove();
+    }
+
+    function askSuggestion(question) {
+      input.value = question;
+      sendMessage();
     }
 
     async function sendMessage() {
@@ -171,13 +571,17 @@
 
         removeTyping();
 
-        const answer = data.answer?.final_answer || "No response received.";
+        const answer = data?.answer || "No response received.";
         addMessage(answer, "bot");
       } catch (err) {
         removeTyping();
         addMessage("Error contacting server.", "bot");
       }
     }
+
+    window.addEventListener('load', () => {
+      input.focus();
+    });
   </script>
 </body>
 </html>

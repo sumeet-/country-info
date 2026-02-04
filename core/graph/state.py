@@ -1,4 +1,4 @@
-from typing import TypedDict, Annotated, Literal
+from typing import TypedDict, Annotated
 import operator
 
 class AgentState(TypedDict):
@@ -20,6 +20,7 @@ class IntentAnalysisResult(TypedDict):
     country_name: str | None
     fields_requested: list[str]
     extra_info: str| None
+    error: str | None
 
 # Schema for final answer result
 class FinalAnswerResult(TypedDict):
