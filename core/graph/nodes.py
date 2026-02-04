@@ -1,10 +1,16 @@
-from core.graph.state import AgentState
+import logging
+
 from langchain_core.messages import HumanMessage
-import json
+
+from services.rest_countries import fetch_country_data
+
+from core.graph.enum import Node
+from core.graph.state import AgentState
 from core.graph.agents import intent_analyzer_agent, final_answer_synthesis_agent
 from core.prompt import get_intent_human_message, get_synthesize_human_message
-from services.rest_countries import fetch_country_data
-from typing import Literal
+
+
+logger = logging.getLogger(__name__)
 
 def identify_intent(state: AgentState) -> dict:
     """
@@ -15,6 +21,7 @@ def identify_intent(state: AgentState) -> dict:
     - Specific fields of information requested by the user
     - Any other specific instructions or context
     """
+    logger.info("Identifying intent...")
     messages = [
         HumanMessage(content=get_intent_human_message(state["user_question"]))
     ]
@@ -22,60 +29,33 @@ def identify_intent(state: AgentState) -> dict:
     response = intent_analyzer_agent.invoke({
         "messages": messages
     })
-    
-    try:
         # Parse LLM response
-        intent_data = response.get("structured_response", {})
-        if intent_data.get("country_name") is None or intent_data.get("error"):
-            raise Exception(intent_data.get("error"))
-        return {
-            "country_name": intent_data.get("country_name"),
-            "fields_requested": intent_data.get("fields_requested", []),
-            "extra_info": intent_data.get("extra_info", ""),
-            "messages": [f"Intent analyzed: {intent_data}"]
-        }
-    except json.JSONDecodeError:
-        return {
-            "error": "Failed to parse intent",
-            "messages": ["Intent parsing error"]
-        }
-    except Exception as e:
-        return {
-            "error": str(e),
-            "messages": [f"Intent analysis error: {str(e)}"]
-        }
-    
+    intent_data = response.get("structured_response", {})
+    logger.info(f"Intent analysis result: {intent_data}")
+    return {
+        "country_name": intent_data.get("country_name"),
+        "fields_requested": intent_data.get("fields_requested", []),
+        "extra_info": intent_data.get("extra_info", ""),
+        "messages": [f"Intent analyzed: {intent_data}"],
+        "error": intent_data.get("error"),
+    }
+
 # Node to fetch data from REST Countries API
 def get_country_info(state: AgentState) -> dict:
     """
     TOOL CALLING NODE
     Fetches data from REST Countries API based on identified country name.
     """
-    try:
-        country = state.get("country_name")
+    country = state.get("country_name")
+    logger.info(f"Getting country info for {country}")
+    # Clean up country name for API
+    country_clean = country.strip()
+    data = fetch_country_data(country_name=country_clean)
 
-        if not country or not isinstance(country, str):
-            return {"error": "No valid country name provided.", 
-                    "messages": ["No valid country name provided."]}
-        
-        # Clean up country name for API
-        country_clean = country.strip()
-
-        data = fetch_country_data(country_name=country_clean)
-
-        if not data:
-            raise ValueError(f"No data returned for country: {country_clean}")
-
-        return {
-            "api_data": data,
-            "messages": [f"Fetched data for {country_clean}"]
-        }
-    except Exception as e:
-        # Optionally log the error and the country name for debugging
-        return {
-            "error": f"API Error: {str(e)}",
-            "messages": [f"API Error: {str(e)}"]
-        }
+    return {
+        "api_data": data,
+        "messages": [f"Fetched data for {country_clean}"],
+    }
 
 # Node to synthesize final answer
 def synthesize_final_answer(state: AgentState) -> dict:
@@ -83,37 +63,28 @@ def synthesize_final_answer(state: AgentState) -> dict:
     ANSWER SYNTHESIS NODE
     Uses LLM to create a natural language answer from the API data
     """
-
-    try:
-        user_question = state["user_question"]
-        api_data = state["api_data"]
-        fields_requested = state["fields_requested"]
-        extra_info = state.get("extra_info", "")
-        messages = [
-            HumanMessage(
-                content=get_synthesize_human_message(
-                    user_question,
-                    fields_requested,
-                    extra_info,
-                    api_data,
-                )
+    logger.info("Synthesizing final answer from API data")
+    messages = [
+        HumanMessage(
+            content=get_synthesize_human_message(
+                state["user_question"],
+                state["fields_requested"],
+                state["extra_info"],
+                state["api_data"],
             )
-        ]
-        response = final_answer_synthesis_agent.invoke({
-            "messages": messages
-        })
-        structured_response = response.get("structured_response", {})
-        final_answer = structured_response.get("final_answer", "")
-        return {
-            "final_answer": final_answer,
-            "messages": ["Final answer synthesized."]
-        }
-    except Exception as e:
-        print(f"Synthesis Error: {str(e)}")
-        return {
-            "error": f"Synthesis Error: {str(e)}",
-            "messages": [f"Synthesis Error: {str(e)}"]
-        }
+        )
+    ]
+    response = final_answer_synthesis_agent.invoke({
+        "messages": messages
+    })
+    structured_response = response.get("structured_response", {})
+    final_answer = structured_response.get("final_answer", "")
+    logger.info(f"Final synthesized answer: {final_answer}")
+    return {
+        "final_answer": final_answer,
+        "messages": ["Final answer synthesized."],
+        "node_stage": Node.SYNTHESIS
+    }
 
 # Node to handle errors
 def handle_error(state: AgentState) -> dict:
@@ -121,20 +92,21 @@ def handle_error(state: AgentState) -> dict:
     ERROR HANDLER NODE
     Generates user-friendly error messages
     """
-    print(f"❌ Handling error: {state.get('error')}")
+    logger.info(f"❌ Handling error: {state.get('error')}")
 
     error = state.get("error", "An unknown error occurred")
 
-    if "not found" in error.lower():
-        final_answer = f"I couldn't find information about that country. Please check the spelling and try again."
-    elif "timeout" in error.lower():
-        final_answer = "The service is currently slow to respond. Please try again in a moment."
+    if "timeout" in error.lower():
+        final_answer = ("The service is currently slow to respond."
+                        " Please try again in a moment.")
     elif "parse" in error.lower():
-        final_answer = "I had trouble understanding your question. Could you rephrase it?"
+        final_answer = ("I had trouble understanding your question. "
+                        "Could you rephrase it?")
+    elif state["node_stage"] == Node.API_DATA and not state["api_data"]:
+        final_answer = (f"Error fetching data for '{state.get('country_name')}'. "
+                        f"Please check the country name and try again.")
     else:
         final_answer = error
-
-    # breakpoint()
 
     return {
         "final_answer": final_answer,
@@ -142,26 +114,29 @@ def handle_error(state: AgentState) -> dict:
     }
 
 # Conditional edges
-def should_continue_to_api(state: AgentState) -> Literal["api_data", "handle_error"]:
+def should_continue_to_api(state: AgentState):
     """
     Decide if we should call the API or handle an error
     """
+    logger.info("Checking if should continue to API...")
+
     if state.get("error"):
-        return "handle_error"
+        return Node.HANDLE_ERROR
     
     if not state.get("country_name"):
-        return "handle_error"
-    
-    return "api_data"
+        return Node.HANDLE_ERROR
+    logger.info(f"Continuing to API call for country: {state.get('country_name')}")
+    return Node.API_DATA
 
-def should_continue_to_synthesis(state: AgentState) -> Literal["synthesis", "handle_error"]:
+def should_continue_to_synthesis(state: AgentState):
     """
     Decide if we should synthesize an answer or handle an error
     """
+    logger.info("Checking if should continue to synthesis...")
     if state.get("error"):
-        return "handle_error"
+        return Node.HANDLE_ERROR
     
     if not state.get("api_data"):
-        return "handle_error"
-    
-    return "synthesis"
+        return Node.HANDLE_ERROR
+    logger.info(f"Continuing to synthesis for country: {state.get('country_name')}")
+    return Node.SYNTHESIS

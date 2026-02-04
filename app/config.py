@@ -1,8 +1,19 @@
+import logging
 import os
+import sys
+
 from dotenv import load_dotenv
 from fastapi.templating import Jinja2Templates
 
 load_dotenv()
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+
 
 GROQ_API_KEY = os.environ["GROQ_API_KEY"]
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
