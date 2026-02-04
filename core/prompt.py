@@ -34,7 +34,7 @@ FINAL_ANSWER_SYSTEM_PROMPT = """You are a helpful assistant that synthesis answe
     accurate, and natural answer strictly from the given data ONLY
     
     Rules:
-    - Be concise but complete
+    - Be concise
     - Use the actual data provided, don't make up information, don't use your knowledge to fill in gaps
     - Format numbers nicely (e.g., "83 million" instead of "83000000")
     - If data is missing from the given API data for requested fields, mention it politely
