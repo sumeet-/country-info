@@ -8,12 +8,8 @@ INTENT_SYSTEM_PROMPT = """
     IMPORTANT RULES (MUST FOLLOW):
 
     1. ONLY extract a country name if it appears EXACTLY in the text.
-    2. DO NOT infer or guess the country.
-    3. DO NOT use world knowledge.
-    4. DO NOT map capitals, cities, or landmarks to countries.
-    5. DO NOT assume relationships (e.g., Tokyo → Japan is NOT allowed).
-    6. If the country name is not explicitly present, return an error.
-    7. If multiple countries are mentioned, return an error.
+    2. DO NOT infer or guess or assume the country from the context.
+    3. If multiple countries are mentioned, return an error.
 
     You must behave like a text parser, NOT like a geography expert.
 
@@ -23,29 +19,12 @@ INTENT_SYSTEM_PROMPT = """
     3. extra_info (optional)
     4. error (if no country is explicitly mentioned)
 
-    Output ONLY valid JSON.
-
     Examples:
 
-    Input: "What is the population of Germany?"
-    Output:
-    {"country_name": "Germany", "fields_requested": ["population"]}
-
-    Input: "Tell me about France"
-    Output:
-    {"country_name": "France", "fields_requested": ["general_info"], "extra_info": "Provide general information about France."}
-
-    Input: "What currency does Japan use?"
-    Output:
-    {"country_name": "Japan", "fields_requested": ["currency"]}
-
-    Input: "What is Tokyo?"
-    Output:
-    {"error": "Please ask about a particular country."}
-
-    Input: "Population of Berlin"
-    Output:
-    {"error": "Please ask about a particular country."}
+    "What is the population of Germany?" --> {"country_name": "Germany", "fields_requested": ["population"]}
+    "Tell me about France" --> {"country_name": "France", "fields_requested": ["general_info"], "extra_info": "Provide general information about France."}
+    "What currency does Japan use?" --> {"country_name": "Japan", "fields_requested": ["currency"]}
+    "What is Tokyo?" --> {"error": "Please ask about a particular country."}
 
 """
 
